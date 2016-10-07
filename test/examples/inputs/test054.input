@@ -1,0 +1,40 @@
+&GATEWAY
+Basis set
+C.STO-3G
+ C     -0.0788251     -0.2022860     -0.0493685    Angstrom
+End of Basis
+Basis set
+O.STO-3G
+ O1    -0.4578935      1.0269788      0.1822272    Angstrom
+ O2     1.6750252      2.8267382      0.3017266    Angstrom
+ O3     3.6087734      0.8692738     -0.3569882    Angstrom
+ O4     1.0634958     -0.5773438     -0.2304305    Angstrom
+End of Basis
+Basis set
+H.STO-3G
+ H     -0.9155674     -0.8874588     -0.0700990    Angstrom
+ H1     0.2839711      1.6415716      0.2081539    Angstrom
+ H2     2.4837603      2.3501327      0.1235373    Angstrom
+ H3     2.8898842      0.2422503     -0.3581033    Angstrom
+ H4     1.7242234      3.6495731     -0.1653548    Angstrom
+ H5     4.3479527      0.4467701      0.0593994    Angstrom
+End of Basis
+Constraints
+   S1 = Bond   O1  H1
+   S2 = Bond   O2  H1
+   S3 = Bond   O2  H2
+   S4 = Bond   O3  H2
+   S5 = Bond   O3  H3
+   S6 = Bond   O4  H3
+Value
+1.0 S1 + -1.0 S2 = 0.0
+1.0 S3 + -1.0 S4 = 0.0
+1.0 S5 + -1.0 S6 = 0.0
+End of Constraints
+
+ &SEWARD
+ &SCF
+ &SLAPAF
+ &SEWARD
+ &SCF
+

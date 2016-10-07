@@ -1,0 +1,15 @@
+
+&GATEWAY
+Title
+ Durene molecule
+Coord=$MOLCAS/Test/input/test053.xyz; basis = STO-3G; group = C1
+End of Input
+
+&SEWARD 
+End of Input
+
+>>COPY $MOLCAS/Test/input/test053.GvOrb INPORB
+&RASSCF
+LUMORB 
+End of Input
+

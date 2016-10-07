@@ -1,0 +1,186 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: O4+
+* Basis: cc-pvdz
+* Symmetry: C2v
+* Features tested: SEWARD(extra charges), SCF, RASSCF, RASSI, CASPT2
+* Responsible person: B. O. Roos 041227
+* Comments: Test of SEWARD with extra charges and RASSCF, RASSI
+*-------------------------------------------------------------------------------
+ &SEWARD &END
+Title
+O4+ calculation RASSCF Energy: -294.85402103
+*Compute one- and two-electron integrals without extra charges
+Symmetry
+y z
+Basis Set
+O.cc-pVDZ....
+O'             2.6692580609        1.1276401844        0.0000000000
+O"            -2.6692580609        1.1276401844        0.0000000000
+End of Basis
+End of Input
+*-------------------------------------------------------------------------------
+!cp $Project.OneInt  OneRef
+!cp $Project.RunFile RunRef
+ &SCF &END
+Occupation
+*-- E   x   y  xy   z  xz  yz xyz
+*-- 4   4   3   2   1   1   1   0
+*-- E   y   z  yz
+   8   4   2   2
+Iterations
+30 40
+End of Input
+*-------------------------------------------------------------------------------
+!ln -fs $Project.ScfOrb INPORB
+ &SEWARD &END
+Title
+O4+ calculation RASSCF Energy: -294.85402103
+*One-electron integrals only with extra charge at (15.0,0.0,0.0)
+Symmetry
+y z
+OneOnly
+Basis Set
+O.cc-pVDZ....
+O'             2.6692580609        1.1276401844        0.0000000000
+O"            -2.6692580609        1.1276401844        0.0000000000
+End of Basis
+XField
+1
+ 15.000 0.0 0.0 4.0 0.0 0.0 0.0
+End of Input
+*-------------------------------------------------------------------------------
+!ln -fs JOB001_ JOBIPH
+ &RASSCF &END
+Thrs
+1.0D-9 2.0D-3 2.0D-3
+Iterations
+50 50
+LUMORB
+NactEl
+3 0 0
+InActive
+*-- E   y   z  yz
+   8   4   2   0
+Ras2
+*-- E   y   z  yz
+   0   2   0   2
+Symmetry
+2
+Spin
+4
+End of input
+!rm -f JOBIPH 
+*-------------------------------------------------------------------------------
+!ln -fs OneRef  ONEINT
+!cp RunRef $Project.RunFile
+!ln -fs JOB001_ JOBOLD
+!ln -fs JOB001  JOBIPH
+ &RASSCF &END
+Thrs
+1.0D-9 2.0D-3 2.0D-3
+JOBIPH
+CIRestart
+NactEl
+3 0 0
+InActive
+*-- E   y   z  yz
+   8   4   2   0
+Ras2
+*-- E   y   z  yz
+   0   2   0   2
+Symmetry
+2
+Spin
+4
+Levsh
+0.5
+Iterations
+50 50 
+End of input
+!rm -f JOBOLD  
+!rm -f JOBIPH  
+!rm -f ONEINT  
+!rm -f $Project.RunFile 
+*-------------------------------------------------------------------------------
+!rm $Project.OneInt
+ &SEWARD &END
+Title
+O4+ calculation RASSCF Energy: -294.85402103
+*One-electron integrals only with extra charge at (-15.0,0.0,0.0)
+Symmetry
+y z
+OneOnly
+Basis Set
+O.cc-pVDZ....
+O'             2.6692580609        1.1276401844        0.0000000000
+O"            -2.6692580609        1.1276401844        0.0000000000
+End of Basis
+XField
+1
+-15.000 0.0 0.0 4.0 0.0 0.0 0.0
+End of Input
+*-------------------------------------------------------------------------------
+!ln -fs JOB002_ JOBIPH
+ &RASSCF &END
+Thrs
+1.0D-9 2.0D-3 2.0D-3
+Iterations
+50 50
+LUMORB
+NactEl
+3 0 0
+InActive
+*-- E   y   z  yz
+   8   4   2   0
+Ras2
+*-- E   y   z  yz
+   0   2   0   2
+Symmetry
+ 2
+Spin
+4
+End of input
+!rm -f JOBIPH 
+*-------------------------------------------------------------------------------
+!ln -fs OneRef  ONEINT
+!cp RunRef $Project.RunFile
+!ln -fs JOB002_ JOBOLD
+!ln -fs JOB002  JOBIPH
+ &RASSCF &END
+Thrs
+1.0D-9 2.0D-3 2.0D-3
+Iterations
+50 50
+JobIph
+CIRestart
+NactEl
+3 0 0
+InActive
+*-- E   y   z  yz
+   8   4   2   0
+Ras2
+*-- E   y   z  yz
+   0   2   0   2
+Symmetry
+ 2
+Spin
+4
+Levsh
+0.5
+End of input
+!rm -f JOBOLD  
+!rm -f JOBIPH  
+!rm -f ONEINT  
+!rm -f $Project.RunFile 
+*-------------------------------------------------------------------------------
+!ln -fs OneRef ONEINT
+!ln -fs RunRef RUNFILE
+ &RASSI &END
+Nrofjobiphs
+ 2 1 1
+  1
+  1
+End of input
+*-------------------------------------------------------------------------------
+

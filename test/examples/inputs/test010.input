@@ -1,0 +1,103 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: HCl
+* Basis: ECP
+* Symmetry: C2v
+* Features tested: SEW,FFPT,SCF,MBPT2,RASSCF,CASPT2,SEW(prop)
+* Responsible person: B. O. Roos 041227
+* Comments: Test of ECP
+*-------------------------------------------------------------------------------
+>export MOLCAS_PRINT=VERBOSE
+  &SEWARD  &END
+Title
+  HCl molecule
+Symmetry
+X Y
+Basis set
+Cl.ECP.HW.3s3p.2s2p.7e-LANL2DZ.
+Cl     0.00000   0.00000   2.40000
+End of basis
+Basis set
+H.ANO-L...3s2p.
+H      0.00000   0.00000   0.00000
+End of basis
+ECPShow
+End of input
+*&GUESSORB
+*-------------------------------------------------------------------------------
+  &FFPT &END
+TITLE
+  Add a small electric field in the z direction
+DIPO
+Z 0.001
+END OF INPUT
+*-------------------------------------------------------------------------------
+  &SCF &END
+Title
+  HCl molecule
+Occupied
+  2 1 1 0
+End of input
+*-------------------------------------------------------------------------------
+  &MBPT2 &END
+Title
+  HCl molecule
+Deleted
+  0 0 0 0
+End of Input
+*-------------------------------------------------------------------------------
+  &RASSCF &END
+Title
+  HCl molecule
+Symmetry
+  1
+Spin
+  1
+nActEl
+  6 0 0
+CIroot
+1 1
+1
+Inactive
+  1 0 0 0
+Ras2
+  2 2 2 0
+LumOrb
+Thrs
+1.0E-10 1.0E-7 1.0E-7
+Iter
+50,25
+End of input
+*-------------------------------------------------------------------------------
+  &CASPT2 &END
+Title
+  HCl
+MaxIterations
+20
+IPEA
+0.0
+End of input
+*-------------------------------------------------------------------------------
+>>LINK $Project.ScfOrb INPORB
+ &SEWARD  &END
+Title
+  HCl molecule
+Symmetry
+X Y
+Basis set
+Cl.ECP.HW.3s3p.2s2p.7e-LANL2DZ.
+Cl     0.00000   0.00000   2.40000
+End of basis
+Basis set
+H.ANO-L...3s2p.
+H      0.00000   0.00000   0.00000
+End of basis
+Vectors
+OrbContributions
+EFLD
+  0
+Multipoles
+  3
+End of input
+*-------------------------------------------------------------------------------
+

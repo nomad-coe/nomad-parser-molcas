@@ -1,0 +1,34 @@
+> export MOLCAS_REDUCE_PRT=NO
+
+&GATEWAY
+Coord=$MOLCAS/Test/input/$Project.xyz
+Basis=6-31G
+
+>>>    COPY $Project.RunFile $Project.Singlet.RunFile
+>>>    COPY $Project.RunFile $Project.Triplet.RunFile
+>>>    RM $Project.RunFile
+
+>>> Do While
+
+>>> export SubProject=.Triplet
+&SEWARD
+&SCF; UHF; ZSPIN=2; Charge=-1
+&ALASKA
+
+>>> export SubProject=.Singlet
+&SEWARD
+&SCF; Charge=-1
+&ALASKA
+
+>>> export SubProject=.Triplet
+>>>    LINK $Project.Singlet.RunFile RUNFILE2
+&SLAPAF
+Constraints
+a= EDiff
+Value 
+a=0.0
+End of Constraints
+Iterations=50
+
+>>> EndDo
+

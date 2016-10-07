@@ -1,0 +1,40 @@
+*$Revision: 7.8 $
+************************************************************************
+* Molecule: H2
+* Basis: DZ
+* Symmetry: x y z
+* SCF: conventional
+*
+*  This is a test to be run during first run to verify
+*   that seward and scf works at all
+*
+
+>export MOLCAS_PRINT=VERBOSE
+ &GATEWAY
+coord
+2
+angstrom
+H  0.350000000  0.000000000  0.000000000
+H -0.350000000  0.000000000  0.000000000
+basis
+H.DZ....
+ 
+ &SEWARD
+
+ &SCF
+Title
+ H2, DZ Basis set
+
+ &RASSCF
+Title
+ H2, DZ Basis set
+nActEl
+ 2  0 0
+Ras2
+ 1 1 0 0 0 0 0 0
+
+ &ALASKA
+
+ &SLAPAF
+
+ &CASPT2

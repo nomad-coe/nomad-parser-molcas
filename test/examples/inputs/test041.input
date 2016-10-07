@@ -1,0 +1,52 @@
+* $Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule:H2O
+* Basis:cc-pVDZ
+* Symmetry: With symmetry
+* Features tested: SEW,DFT,ALASKA,Numerical_Gradient,SlapAf
+* Responsible person: J.W. Krogh 060303
+* Comments: Test of geometry optimization using numerical gradients and DFT
+*-------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>> DO while <<<<<<<<<<<<<<<<<<<<
+&SEWARD &END
+Title
+ The integrals Generated: Thu Feb 16 16:00:33 2006
+Symmetry
+X Y
+Basis Set
+H.cc-pVDZ.Dunning.4s1p.2s1p..
+     H1            0.000000       1.430201       1.545520 
+End of Basis Set
+Basis Set
+O.cc-pVDZ.Dunning.9s4p1d.3s2p1d.
+     O1           0.000000       0.000000       0.402242  
+End of Basis Set
+End of Input
+****************************************
+*&GuessOrb &End
+****************************************
+ &SCF &End
+Title
+ The SCF part
+Charge
+ 0
+KSDFT
+B3LYP5
+End of Input
+****************************************
+ &Alaska &End
+Numerical
+Delta
+0.005
+End of Input
+*-------------------------------------------------------------------------------
+ &SLAPAF &END
+Iterations
+10
+MaxStep
+0.5
+End of input
+*&Last_Energy
+>>>>>>>>>>>>> ENDDO <<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+****************************************
+End of Input

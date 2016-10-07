@@ -1,0 +1,346 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: C4H6 (butadiene)
+* Basis: ANO-L(DZ)
+* Symmetry: C2h
+* Features tested SEWARD, SCF, MP2, RASSCF,RASSI,CASPT2
+* Responsible person: B. O. Roos 041227
+* Comments: Test of geometry OPT with SCF plus MP2
+*-------------------------------------------------------------------------------
+ &SEWARD &END
+Title
+ butadiene molecule
+Symmetry
+ XY Z
+Basis set
+C.ANO-L...3s2p.
+C1   -3.2886930 -1.1650250 0.0000000  Bohr
+C2   -0.7508076 -1.1650250 0.0000000  Bohr
+End of basis
+Basis set
+H.ANO-L...2s.
+H1   -4.3067080  0.6343050 0.0000000  Bohr
+H2   -4.3067080 -2.9643550 0.0000000  Bohr
+H3    0.2672040 -2.9643550 0.0000000  Bohr
+End of basis
+End of Input
+*-------------------------------------------------------------------------------
+ &SCF &END
+TITLE
+ butadiene molecule
+OCCUPIED
+7 6 1 1
+ITERATIONS
+40
+END OF INPUT
+
+ &MBPT2 &END
+Title
+ tButa molecule
+End of Input
+*-------------------------------------------------------------------------------
+!ln -fs $Project.11Ag.JobIph JOBIPH
+ &RASSCF &END
+TITLE
+ butadiene molecule 11Ag
+SYMMETRY
+    1
+SPIN
+    1
+NACTEL
+    4    0    0
+FROZEN
+    2    2    0    0
+INACTIVE
+    5    4    0    0
+RAS2
+    0    0    2    2
+ITER
+50,25
+CIMX
+25
+LUMORB
+*JOBI
+*thrs
+*1.0D-8 1.0D-6 1.0D-6
+END OF INPUT
+*-------------------------------------------------------------------------------
+!rm -f JOBIPH 
+!ln -fs $Project.11Bu.JobIph JOBIPH
+ &RASSCF &END
+TITLE
+ butadiene molecule 11Bu
+SYMMETRY
+    2
+SPIN
+    1
+NACTEL
+    4    0    0
+FROZEN
+    2    2    0    0
+INACTIVE
+    5    4    0    0
+RAS2
+    0    0    2    2
+ITER
+50,25
+CIMX
+25
+LUMORB
+*JOBI
+*thrs
+*1.0D-8 1.0D-6 1.0D-6
+END OF INPUT
+*-------------------------------------------------------------------------------
+!rm -f JOBIPH 
+!ln -fs $Project.21Ag.JobIph JOBIPH
+ &RASSCF &END
+TITLE
+ butadiene molecule average 1Ag
+SYMMETRY
+    1
+SPIN
+    1
+NACTEL
+    4    0    0
+FROZEN
+    2    2    0    0
+INACTIVE
+    5    4    0    0
+RAS2
+    0    0    2    2
+CIROOT
+2 2
+1 2
+1 1
+LEVSHFT
+0.5
+ITER
+50,25
+CIMX
+25
+LUMORB
+*JOBI
+*thrs
+*1.0D-8 1.0D-6 1.0D-6
+END OF INPUT
+!rm -f JOBIPH 
+*-------------------------------------------------------------------------------
+!ln -fs $Project.11Ag.JobIph JOBIPH
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+30
+Lroot
+1
+JACO
+PACK
+1.d-20
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+ 30
+Lroot
+ 1
+Shift
+ 0.1
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+!rm -f JOBIPH 
+*-------------------------------------------------------------------------------
+!ln -fs $Project.11Bu.JobIph JOBIPH
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+30
+Lroot
+1
+JACO
+PACK
+1.d-20
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+ 30
+Lroot
+ 1
+Shift
+ 0.1
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+!rm -f JOBIPH 
+*-------------------------------------------------------------------------------
+!ln -fs $Project.21Ag.JobIph JOBIPH
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+30
+Lroot
+2
+JACO
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+ 30
+Lroot
+ 2
+Shift
+ 0.1
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+*-------------------------------------------------------------------------------
+!ln -fs $Project.11Ag.JobIph JOB001
+!ln -fs $Project.11Bu.JobIph JOB002
+ &RASSI &END
+Nrofjobiphs
+ 2 1 1
+  1
+  1
+End of input
+!rm -f JOB0?? 
+*-------------------------------------------------------------------------------
+ &RASSCF &END
+TITLE
+ butadiene molecule 13Bu
+SYMMETRY
+    2
+SPIN
+    3
+NACTEL
+    4    0    0
+FROZEN
+    2    2    0    0
+INACTIVE
+    5    4    0    0
+RAS2
+    0    0    2    2
+ITER
+50,25
+CIMX
+25
+LUMORB
+*JOBI
+*thrs
+*1.0D-8 1.0D-6 1.0D-6
+END OF INPUT
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+30
+Lroot
+1
+JACO
+PACK
+1.d-20
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+ 30
+Lroot
+ 1
+Shift
+ 0.1
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+*-------------------------------------------------------------------------------
+ &RASSCF &END
+TITLE
+ butadiene molecule 23Bu
+SYMMETRY
+    2
+SPIN
+    3
+NACTEL
+    4    0    0
+FROZEN
+    2    2    0    0
+INACTIVE
+    5    4    0    0
+RAS2
+    0    0    2    2
+CIROot
+ 1 2
+ 2
+ITER
+ 50,25
+CIMX
+ 25
+LUMORB
+*thrs
+*1.0D-8 1.0D-6 1.0D-6
+END OF INPUT
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+30
+Lroot
+2
+JACO
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ tButa
+Maxit
+ 30
+Lroot
+ 2
+Shift
+ 0.1
+Convergence
+1.0D-7
+IPEA
+0.0
+End of input
+

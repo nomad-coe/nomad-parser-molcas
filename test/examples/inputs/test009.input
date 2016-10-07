@@ -1,0 +1,146 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: HF
+* Basis: ANO-L
+* Symmetry: C2v
+* Features tested: SEW,SCF,RASSCF,CASPT2,CC,MOTRA,GUGA,MRCI,CPF
+* Responsible person: B. O. Roos 041227
+* Comments: Test with small disk space.
+*-------------------------------------------------------------------------------
+>export MOLCASDISK=1
+ &SEWARD  &END
+Title
+ HF molecule
+Symmetry
+X Y
+Basis set
+F.ANO-L...4s3p2d.
+F      0.00000   0.00000   1.73300
+End of basis
+Basis set
+H.ANO-L...3s2p.
+H      0.00000   0.00000   0.00000
+End of basis
+End of input
+*-------------------------------------------------------------------------------
+ &SCF &END
+Title
+ HF molecule
+Occupied
+ 3 1 1 0
+End of input
+*-------------------------------------------------------------------------------
+ &RASSCF &END
+Title
+ HF molecule
+Symmetry
+ 1
+Spin
+ 1
+nActEl
+ 6 0 0
+CIroot
+1 1
+1
+Inactive
+ 2 0 0 0
+Ras2
+ 2 2 2 0
+LumOrb
+Thrs
+1.0E-10 1.0E-7 1.0E-7
+Iter
+50,25
+End of input
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ Hydrogen fluoride
+MaxIterations
+20
+IPEA
+0.0
+End of input
+>>LINK -force $Project.ScfOrb INPORB
+ &MOTRA &END
+Title
+ HF molecule
+LumOrb
+End of input
+*-------------------------------------------------------------------------------
+ &GUGA &END
+Title
+ HF molecule
+Electrons
+    8
+Spin
+    1
+Symmetry
+    4
+Inactive
+    2    1    1    0
+Active
+    0    0    0    0
+CiAll
+    1
+End of Input
+*-------------------------------------------------------------------------------
+ &MRCI &END
+Title
+ HF molecule
+SDCI
+End of input
+*-------------------------------------------------------------------------------
+ &CPF &END
+Title
+ HF molecule
+Mcpf
+End of input
+*-------------------------------------------------------------------------------
+!ln -fs $Project.RasOrb RASORB
+ &RASSCF &END
+Title
+ HF molecule
+Symmetry
+ 1
+Spin
+ 1
+nActEl
+ 0 0 0
+CIroot
+1 1
+1
+Inactive
+ 3 1 1 0
+LumOrb
+OutOrbitals
+ Canonical
+Thrs
+1.0E-10 1.0E-7 1.0E-7
+Iter
+50,25
+End of input
+*-------------------------------------------------------------------------------
+ &MOTRA &END
+Title
+ HF molecule
+LumOrb
+Frozen
+ 1 0 0 0
+End of input
+*-------------------------------------------------------------------------------
+!rm INPORB
+!ln -fs $Project.RasOrb INPORB
+ &CCSDT &END
+Title
+ Hydrogen fluoride
+CCT
+*Frozen
+*1 0 0 0
+Iterations
+20
+Triply
+2
+End of input
+*-------------------------------------------------------------------------------
+

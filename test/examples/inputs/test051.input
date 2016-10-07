@@ -1,0 +1,60 @@
+* $Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: H2O
+* Basis: from mb tp vtzp
+* Features tested: EXPBAS
+* Responsible person: B. O. Roos 080417
+*-------------------------------------------------------------------------------
+ &GATEWAY
+coord 
+ 3
+ 
+O  0.000000  0.000000  0.000000
+H1 0.587700  0.759100  0.000000
+H2 0.587700 -0.759100  0.000000 
+basis
+ANO-RCC-MB
+ &SEWARD
+ &SCF
+Title
+ H2O molecule in minimal basis set.
+
+>>COPY $Project.ScfOrb INP1
+>>COPY $Project.RunFile RUNFIL1
+>>RM $Project.RunFile
+
+ &GATEWAY
+coord 
+ 3
+ 
+O  0.000000  0.000000  0.000000
+H1 0.587700  0.759100  0.000000
+H2 0.587700 -0.759100  0.000000 
+basis
+ANO-RCC-VTZP
+ &SEWARD
+ &SCF
+Title
+ H2O molecule in DZP basis set.
+
+>>COPY $Project.RunFile RUNFIL2
+>>COPY INP1 INPORB
+>>RM $Project.RunFile
+
+ &EXPBAS
+>>COPY $Project.ExpOrb INPORB
+
+ &GATEWAY
+coord 
+ 3
+ 
+O  0.000000  0.000000  0.000000
+H1 0.587700  0.759100  0.000000
+H2 0.587700 -0.759100  0.000000 
+basis
+ANO-RCC-VTZP
+ &SEWARD
+ &SCF
+Title
+ H2O molecule in DZP basis set with start vectors.
+LumOrb

@@ -1,0 +1,43 @@
+* $Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: C2H4O (acetaldehyde)
+* Basis: cc-pvtz
+* Symmetry: Cs
+* Features tested: SEW(PCM),SCF
+* Responsible person: B. O. Roos 041227
+* Comments: Test of the PCM model
+*-------------------------------------------------------------------------------
+ &SEWARD &END
+Title
+acetaldehyde
+Basis set
+H.ANO-S...2s.
+H1               0.0151760290        0.0000088544       -2.9110013387
+H2              -2.0873396672        0.0000037621        2.5902220967
+H3              -3.4601725077       -1.6628370597        0.0320271859
+H4              -3.4601679801        1.6628382651        0.0320205364
+End of basis
+Basis set
+C.ANO-S...3s2p.
+C5               0.1727682300       -0.0000045651       -0.8301598059
+C6              -2.3763311896        0.0000001634        0.5600567139
+End of basis
+Basis set
+O.ANO-S...3s2p.
+O                2.2198078005        0.0000024315        0.2188182082
+End of basis
+RF-Input
+PCM-model
+End of RF-Input
+END OF INPUT
+*-------------------------------------------------------------------------------
+ &SCF &END
+Title
+aceton
+ITERATIONS
+ 50
+Occupied
+12
+End of input
+*-------------------------------------------------------------------------------
+

@@ -1,0 +1,57 @@
+*$Revision: 7.8 $
+*performance test 905
+*Responsible person: Per-Aake Malmqvist
+*Testing: SEWARD, RASSCF, CASPT2 2*H2O
+*Runtime: about 7 min.
+*-------------------------------------------------------------------------------
+>>export MOLCAS_MOLDEN=OFF
+>>export MOLCAS_NOCHECK=POTNUC,SEWARD_MLTPL1X,SEWARD_KINETIC,SEWARD_ATTRACT
+ &SEWARD &END
+Pkthre
+1.0D-11
+Basis set
+O.ANO-L...4s3p2d1f.
+O1       .00000000  -2.00000000    .00000000
+O2       .00000000   2.00000000    .00000000
+End of basis
+Basis set
+H.ANO-L...3s2p1d.
+H1A     1.43354233  -2.00000000    .95295406
+H1B    -1.43354233  -2.00000000    .95295406
+H2A     1.43354233   2.00000000    .95295406
+H2B    -1.43354233   2.00000000    .95295406
+End of basis
+End of input
+*-------------------------------------------------------------------------------
+>>COPY $MOLCAS/Test/input/test905.InpOrb test905.InpOrb
+>>Link test905.InpOrb INPORB
+*-------------------------------------------------------------------------------
+>>export MOLCAS_NOCHECK=RASSCF_ITER,MLTPL
+ &RASSCF &END
+Title
+ A couple of water molecules
+Nactel
+  8  0  0
+Spin
+  1
+Inactive
+   6
+Ras2
+  10
+Lumorb
+LevShift
+ 0.6D0
+End of input
+*-------------------------------------------------------------------------------
+ &CASPT2 &END
+Title
+ A couple of water molecules
+MaxIterations
+20
+IPEA
+ 0.0
+Frozen
+  2
+End of input
+*-------------------------------------------------------------------------------
+

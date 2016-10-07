@@ -1,0 +1,139 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: Various molecules
+* Basis: DEF-SV(P), DEF-SVP
+* Symmetry: C1, Cs, C2v
+* Features tested: SEWARD (Option: RI,out-of-core), SCF, DFT
+* Responsible person: R. Lindh
+* Comments:
+*-------------------------------------------------------------------------------
+ &Seward
+Title
+Comparison to Turbomole
+
+Basis
+H.DEF-SV(P)...
+H1     1.43445000    1.11084200    0.00000000
+H2    -1.43445000    1.11084200    0.00000000
+End of Basis
+
+Basis
+O.DEF-SV(P)...
+O 0.0 0.0 0.0
+End of Basis
+
+
+RIJ
+End of Input
+
+ &SCF
+Occupation
+5
+KSDFT
+SVWN5
+ChoInput
+Algo
+ 3
+EndChoInput
+End of input
+*-------------------------------------------------------------------------------
+>>RM  $Project.RunFile
+*-------------------------------------------------------------------------------
+ &Seward
+Title
+Comparison to Turbomole
+
+Basis
+H.DEF-SVP...
+H1     1.43445000    1.11084200    0.00000000
+H2    -1.43445000    1.11084200    0.00000000
+End of Basis
+
+Basis
+O.DEF-SVP...
+O 0.0 0.0 0.0
+End of Basis
+
+
+RIJ
+End of Input
+
+ &SCF
+Occupation
+5
+KSDFT
+LDA
+ChoInput
+Algo
+ 3
+EndChoInput
+End of input
+*-------------------------------------------------------------------------------
+>>RM  $Project.RunFile
+*-------------------------------------------------------------------------------
+ &Seward
+Title
+Comparison to Turbomole
+
+Symmetry
+z
+
+Basis
+H.DEF-SVP...
+H1     1.43445000    1.11084200    0.00000000
+H2    -1.43445000    1.11084200    0.00000000
+End of Basis
+
+Basis
+O.DEF-SVP...
+O 0.0 0.0 0.0
+End of Basis
+
+
+RIJ
+End of Input
+
+ &SCF
+Occupation
+4 1
+KSDFT
+LDA  
+ChoInput
+Algo
+ 3
+EndChoInput
+End of input
+*-------------------------------------------------------------------------------
+>>RM  $Project.RunFile
+*-------------------------------------------------------------------------------
+ &Seward
+Title
+Comparison to Turbomole
+
+Symmetry
+x z
+
+Basis
+H.DEF-SVP...
+H1     1.43445000    1.11084200    0.00000000
+End of Basis
+
+Basis
+O.DEF-SVP...
+O 0.0 0.0 0.0
+End of Basis
+
+
+RIJ
+End of Input
+
+ &SCF
+Occupation
+3 1 1 0
+KSDFT
+LDA  
+ChoInput
+Algo
+ 3
+EndChoInput
+End of input

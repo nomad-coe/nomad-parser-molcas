@@ -1,0 +1,37 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: Methyl radical (CH3)
+* Basis: ANO-S, DZP
+* Symmetry: C1
+* Features tested: SCF(UHF), DFT
+* Responsible person: B. O. Roos 041227
+* Comments:
+*-------------------------------------------------------------------------------
+ &SEWARD &END
+Title
+CH3 radical
+Basis
+C.cc-pVDZ.....
+C             -0.0038458905        0.0000068621        2.8015161928
+End of Basis
+Basis
+H.cc-pVDZ.....
+H1             2.0738473919       -0.0000163143        2.8035654722
+H2            -1.0427160672       -1.7993232371        2.8013207296
+H5            -1.0427122325        1.7993326893        2.7997491403
+End of Basis
+End of input
+*-------------------------------------------------------------------------------
+ &SCF &End
+UHF
+End of Input
+>>COPY $Project.UhfOrb UHF.ScfOrb
+*>>LINK -force UHF.ScfOrb INPORB
+*-------------------------------------------------------------------------------
+ &SCF &End
+UHF
+FILEORB
+UHF.ScfOrb
+KSDFT
+BLYP
+End of Input

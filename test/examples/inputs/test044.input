@@ -1,0 +1,57 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: LiF near dissociation
+* Basis: ANO-S DZP
+* Symmetry: C2v
+* Features tested: SEWARD, GUESSORB, RASSCF, CASPT2 with Cholesky
+* Responsible person: P. AA. Malmqvist 070604
+* Comments: Test of Cholesky MS-CASPT2
+*-------------------------------------------------------------------------------
+>export MOLCAS_THR=1
+>export MOLCAS_PRINT=Verbose
+ &SEWARD &END
+Title
+ LiF
+Symmetry
+  X  Y
+ChoInput
+thrc
+ 1.0d-6
+EndChoInput
+Basis set
+Li.ANO-S...3s1p.
+Li      0.00000000   0.00000000   0.00000000
+End of basis
+Basis set
+F.ANO-S...3s2p1d.
+F       0.00000000   0.00000000   8.5000
+End of basis
+End of input
+
+ &RASSCF &END
+LUMOrb
+Symmetry
+ 1
+Spin
+ 1
+nActEl
+ 6 0 0
+Inactive
+ 3 0 0 0
+Ras2
+ 2 2 2 0
+CIRoots
+  2  2  1
+ChoInput
+NoLK
+EndChoInput
+End of input
+
+ &CASPT2 &END
+Frozen
+ 1 0 0 0
+MultiState
+  2  1 2
+Maxiterations
+ 40
+End of input

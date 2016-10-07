@@ -1,0 +1,53 @@
+*$Revision: 7.8 $
+*performance test
+*Responsible person: Per Ake Malmqvist
+*Testing: SEWARD, RASSCF, RASSI
+*Runtime: about 3 min.
+*-------------------------------------------------------------------------------
+>>export MOLCAS_MOLDEN=OFF
+>>export MOLCAS_NOCHECK=POTNUC,SEWARD_MLTPL1X,SEWARD_KINETIC,SEWARD_ATTRACT
+&SEWARD
+Pkthre
+1.0D-11
+Basis set
+C.ANO-S...3s2p1d.
+C1   0.00000    0.00000   -1.98155     Angstrom
+C2   0.00000    0.00000   -0.73585     Angstrom
+C3   0.00000    0.00000    0.62085     Angstrom
+C4   0.00000    0.00000    1.91075     Angstrom
+C5   0.00000    0.00000    3.24785     Angstrom
+End of basis
+Basis set
+H.ANO-S...2s1p.
+H    0.00000    0.00000   -3.06205     Angstrom
+End of basis
+NoGuess
+End of input
+*-------------------------------------------------------------------------------
+>> COPY $MOLCAS/Test/input/test916.RasOrb    INPORB
+>>export MOLCAS_NOCHECK=SCF_ITER,RASSCF_ITER,MLTPL
+ &RASSCF
+Title
+ C5H (A linear molecule)
+Lumorb
+Nactel
+  9  0  0
+Spin
+  2
+Inactive
+  11
+Ras2
+  10
+SDAV
+ 500
+CIRoots
+  4  4  1
+Tight
+ 1.0D-8 1.0D-5
+End of input
+*-------------------------------------------------------------------------------
+&RASSI
+Nr of JobIph files
+ 1  4
+ 1  2  3  4
+End of Input

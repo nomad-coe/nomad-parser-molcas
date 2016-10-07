@@ -1,0 +1,102 @@
+* $Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule:H2O
+* Basis:cc-pVDZ
+* Symmetry: With symmetry
+* Features tested: SEW,SCF,RASSCF,MOTRA,CC,ALASKA,Numerical_Gradient,SlapAf
+* Responsible person: J.W. Krogh 060303
+* Comments: Test of geometry optimization using numerical gradients and couple cluster
+*-------------------------------------------------------------------------------
+>>>>> SET MAXITER 300 <<<<
+>>>>>>>>>>>>>>>>>>> DO while <<<<<<<<<<<<<<<<<<<<
+&SEWARD &END
+Title
+ The integrals Generated: Thu Feb 16 16:00:33 2006
+Symmetry
+X Y
+Basis Set
+H.cc-pVDZ.Dunning.4s1p.2s1p..
+H1  0.0000000000  1.4182381156  1.5478261410
+End of Basis Set
+Basis Set
+O.cc-pVDZ.Dunning.9s4p1d.3s2p1d.
+O1  0.0000000000  0.0000000000  0.3976297181
+End of Basis Set
+End of Input
+****************************************
+>>>>>>>>>>> if ( iter = 1 ) <<<<<<<<<<<<<<
+*&GuessOrb &End
+****************************************
+ &SCF &End
+Title
+ The SCF part
+Charge
+ 0
+End of Input
+>>>>>>>>>  endif <<<<<<<<<<<<<<<<<<<<<<<<
+****************************************
+****************************************
+ &RASSCF &End
+Title
+ The RAS/CAS part
+LUMOrb
+Spin
+1
+Symmetry
+1
+nActEl
+0  0  0
+Inactive
+3   1   1   0
+Ras2
+0   0   0   0
+CIROOT
+1 1
+1
+THRS
+1.0e-12, 1.0e-06, 1.0e-06
+OUTOrbitals
+Canonical
+End of Input
+****************************************
+****************************************
+ &MOTRA &End
+Title
+MOTRA input for subsequent CCSDT calculation
+JOBIph
+Frozen
+1 0 0 0
+End of Input
+****************************************
+ &CCSDT &End
+Title
+ The Coupled Cluster part
+CCT
+ADAPtations
+1
+Denominators
+0
+T3DEnominators
+0
+TRIPles
+3
+End of Input
+****************************************
+ &Alaska &End
+Delta
+0.005
+End of Input
+*-------------------------------------------------------------------------------
+ &SLAPAF &END
+Iterations
+16
+MaxStep
+0.5
+THRS
+ 1.0D-10 1.0D-06
+End of input
+*&Last_Energy
+>>>>>>>>>>>>> ENDDO <<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+****************************************
+* &Grid_it &End
+End of Input

@@ -1,0 +1,59 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: NH3
+* Basis: ANO-S DZP
+* Symmetry: C1
+* Features tested: SEW,GUESSORB,RASSCF,LOPROP
+* Responsible person: B. O. Roos 041227
+* Comments: Test of LOPROP
+*-------------------------------------------------------------------------------
+ &SEWARD  &END
+Title
+ Ammonia
+PkThrs
+1.0d-9
+Basis set
+H.ANO-S...2s1p.
+H1      0.940000     0.000000	  0.360000   /Angstrom
+H2     -0.470000     0.814064	  0.360000   /Angstrom
+H3     -0.470000    -0.814064	  0.360000   /Angstrom
+End of basis
+
+Basis set
+N.ANO-S...3s2p1d.
+N4   0.000000     0.000000     0.000000  /Angstrom
+End of basis
+
+End of input
+*-------------------------------------------------------------------------------
+*&GUESSORB &END
+*-------------------------------------------------------------------------------
+ &SCF &END
+Occupied
+ 5 
+End of input
+*-------------------------------------------------------------------------------
+ &RASSCF &END
+Title
+ Ammonia
+Symmetry
+ 1
+Spin
+ 1
+nActEl
+ 8 0 0
+Inactive
+ 1
+Ras2
+ 7
+Tight
+ 1.0-9 0.0001
+End of input
+*-------------------------------------------------------------------------------
+ &LoProp &End
+Expansion
+Midpoint
+NoField
+End of Input
+*-------------------------------------------------------------------------------
+

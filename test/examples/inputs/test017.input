@@ -1,0 +1,38 @@
+*$Revision: 7.8 $
+*-------------------------------------------------------------------------------
+* Molecule: CH4
+* Basis: cc-pVDZ
+* Symmetry: C2v
+* Features tested: SEW,SCF(DFT),ALASKA,SLAPAF
+* Responsible person: B. O. Roos 041230
+* Comments: DFT Geometry optimization
+*-------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>> DO while <<<<<<<<<<<<<<<<<<<<
+>export MOLCAS_PRINT=VERBOSE
+ &SEWARD &END
+Symmetry
+x z
+Basis Set
+C.cc-pVDZ....
+C 0.0 0.0 0.0
+End of Basis
+Basis Set
+H.cc-pVDZ....
+HA             1.67103            -1.18160             0.0000000000
+HB             0.0000000000        1.18160             1.67103
+End of Basis
+End of input
+*-------------------------------------------------------------------------------
+ &SCF &END
+KSDFT
+B3LYP
+End of Input
+*-------------------------------------------------------------------------------
+ &ALASKA &END
+End of Input
+*-------------------------------------------------------------------------------
+ &SLAPAF &END
+End of Input
+*&Last_Energy
+>>>>>>>>>>>>> ENDDO <<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+*-------------------------------------------------------------------------------
