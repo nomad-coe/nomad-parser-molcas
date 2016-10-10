@@ -21,10 +21,11 @@ object MolcasParser extends SimpleExternalParserGenerator(
       )) :: Nil
   ),
   mainFileTypes = Seq("text/.*"),
-  mainFileRe = """Regex
-for
-molcas
-mainfile
+  mainFileRe = """.*
+.*
+.*
+[\s^]*M O L C A S
+[\s^]*version \S+ patchlevel \S+
 """.r,
   cmd = Seq(DefaultPythonInterpreter.pythonExe(), "${envDir}/parsers/molcas/parser/parser-molcas/main.py",
     "--uri", "${mainFileUri}", "${mainFilePath}"),
