@@ -1,3 +1,5 @@
+#!/labEnv3/bin/python
+# XXXXX ugly hashbang
 from __future__ import print_function
 import os
 import sys
@@ -21,6 +23,45 @@ metaInfoEnv, warnings = loadJsonFile(filePath=metaInfoPath,
                                      uri=None)
 
 parser_info = {'name': 'molcas-parser', 'version': '1.0'}
+
+# OK
+#    "program_basis_set_type",
+#    "program_name",
+#    "program_version",
+#    "configuration_periodic_dimensions"
+#    "simulation_cell",  # molcas never has a cell
+
+
+
+#    "atom_labels",
+#    "atom_positions",
+#    "energy_total",
+
+#    'section_system',
+#    'section_method',
+#    'section_frame_sequence',
+#    'section_sampling_method',
+#    'single_configuration_to_calculation_method_ref',
+#    'single_configuration_calculation_to_system_ref',
+#    'atom_forces_raw',
+#    'frame_sequence_local_frames_ref',
+#    'frame_sequence_to_sampling_ref',
+
+#    'XC_functional_name',
+#    'smearing_kind',
+#    'smearing_width'
+#    'eigenvalues_kpoints',
+#    'eigenvalues_values',
+#    'eigenvalues_occupation',
+#    'band_k_points',
+#    'band_energies',
+#    'band_segm_start_end',
+#    'band_segm_labels',
+#    'dos_energies',
+#    'dos_values',
+#    'section_XC_functionals',
+
+
 
 class MolcasContext(object):
     def __init__(self):
@@ -135,13 +176,25 @@ def get_finalresults_sm():  # Other modes than SCF/KS-DFT?
            ])
     return m
 
+def get_header_sm():
+    m = SM(r'[\s^]*M O L C A S',
+           endReStr=r'\s*For the author list and the recommended.*',
+           name='header',
+           subMatchers=[
+               SM(r'[\s^]*version\s*(?P<program_version>.*?)\s*$',
+                  name='version')
+           ])
+    return m
+
 mainFileDescription = SM(
     name='root',
     weak=True,
     startReStr='',
-    fixedStartValues={'program_name': 'Molcas'},
+    fixedStartValues={'program_name': 'Molcas',
+                      'program_basis_set_type': 'gaussians'},
     sections=['section_run'],
     subMatchers=[
+        get_header_sm(),
         get_inputfile_echo_sm(),
         get_system_sm(),
         get_finalresults_sm(),
