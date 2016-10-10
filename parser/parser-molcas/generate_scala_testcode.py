@@ -15,10 +15,10 @@ import org.{ json4s => jn }
 test_template = """\
     "test %(name)s " >> {
       "test with json-events" >> {
-        ParserRun.parse(MolcasParser, "parsers/molcas/test/examples/test/%(name)s", "json-events") must_== ParseResult.ParseSuccess
+        ParserRun.parse(MolcasParser, "parsers/molcas/test/examples/%(name)s", "json-events") must_== ParseResult.ParseSuccess
       }
       "test with json" >> {
-        ParserRun.parse(MolcasParser, "parsers/molcas/test/examples/test/%(name)s", "json") must_== ParseResult.ParseSuccess
+        ParserRun.parse(MolcasParser, "parsers/molcas/test/examples/%(name)s", "json") must_== ParseResult.ParseSuccess
       }
     }"""
 
