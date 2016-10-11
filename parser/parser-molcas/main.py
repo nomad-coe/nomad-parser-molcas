@@ -71,7 +71,9 @@ class MolcasContext(object):
         pass
 
     def onClose_section_method(self, backend, gindex, section):
-        pass  # DFT etc
+        scftype = section['x_molcas_scf_name']
+        if scftype is not None:
+            print('SCF', scftype)
 
     def onClose_section_system(self, backend, gindex, section):
         matrix = self.data.pop('coordinates')
@@ -156,7 +158,9 @@ def get_system_sm():
            name='structure',
            sections=['section_system'],
            subMatchers=[
-               SM(r'\s*\*+\s*Cartesian Coordinates / Bohr, Angstrom\s*\*+',
+               SM(r'\s*--------', name='bar'),
+               SM(r'.*?Cartesian Coordinates / Bohr, Angstrom\s*\*+',
+                  name='coords',
                   subMatchers=[
                       context.multi_sm('coordinates',
                                        r'\s*Center\s*Label\s*x\s*y\s*z\s*x\s*y\s*z',
@@ -186,6 +190,54 @@ def get_header_sm():
            ])
     return m
 
+def molcas_main_loop_sm():
+    m = SM(r'',
+           repeats=True,
+           subMatchers=[
+               SM(r'',
+                  name='main',
+                  endReStr=r'\s*Happy landing!',
+                  weak=True,
+                  #forwardMatch=True,
+                  subFlags=SM.SubFlags.Unordered,
+                  #repeats=True,
+                  subMatchers=[
+                      get_system_sm(),
+               #SM(r'')  # Always eat the line if another matcher does not
+                  ])
+           ])
+    return m
+
+molcas_modules = ('alaska|caspt2|casvb|ccsdt|cpf|expbas|ffpt|gateway|'
+                  'genano|grid_it|guessorb|guga|last_energy|loprop|mbpt2|'
+                  'mckinley|mclr|motra|mrci|numerical_gradient|rasscf|'
+                  'rassi|scf|slapaf|vibrot').split('|')
+
+def get_anymodule_sms():
+    sms = []
+    for modulename in molcas_modules:
+        sms.append(SM(r'\s*MOLCAS executing module %s' % modulename.upper(),
+                      name=modulename))
+    return sms
+
+def molcas_main_loop_sm2():
+    m = SM(r'--- Start Module: (\S+)',
+           endReStr='--- Stop Module:',
+           repeats=True,
+           name='module',
+           subMatchers=[
+               SM(r'\s*MOLCAS executing module SEWARD', name='seward',
+                  subMatchers=[
+                      get_system_sm()
+                  ]),
+               SM(r'\s*MOLCAS executing module SCF', name='scf',
+                  sections=['section_method'],
+                  subMatchers=[
+                      SM(r'\s*(?P<x_molcas_scf_name>\S+)\s*iterations: Energy and convergence statistics')
+                  ]),
+           ] + get_anymodule_sms())
+    return m
+
 mainFileDescription = SM(
     name='root',
     weak=True,
@@ -195,9 +247,9 @@ mainFileDescription = SM(
     sections=['section_run'],
     subMatchers=[
         get_header_sm(),
-        get_inputfile_echo_sm(),
-        get_system_sm(),
-        get_finalresults_sm(),
+        #get_inputfile_echo_sm(),
+        molcas_main_loop_sm2(),
+        #molcas_main_loop_sm(),
         SM(r'x^',  # force parser to parse the whole file
            name='impossible')
     ])
