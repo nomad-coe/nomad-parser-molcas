@@ -4,7 +4,7 @@ functionals = {'LSDA': ['LDA_X', 'LDA_C_VWN_3'],
                'LSDA5': ['LDA_X', 'LDA_C_VWN'],
                'LDA5': ['LDA_X', 'LDA_C_VWN'],
                'SVWN5': ['LDA_X', 'LDA_C_VWN'],
-               'HFB': ['GGA_X_B88'], #['GGA_X_B88' + Becke’s 1988 exchange functional which includes the Slater exchange along with corrections involving the gradient of the density],
+               'HFB': ['GGA_X_B88'], #['GGA_X_B88' + Becke's 1988 exchange functional which includes the Slater exchange along with corrections involving the gradient of the density],
                'HFS': ['LDA_X'],  # Original HK/KS articles?  No libxc name...
                'HFB86': ['GGA_X_B86'],
                'HFO': ['GGA_X_OPTX'],

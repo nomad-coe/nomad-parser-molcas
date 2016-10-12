@@ -16,6 +16,8 @@ from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 from nomadcore.unit_conversion.unit_conversion \
     import register_userdefined_quantity, convert_unit
 
+from functionals import functionals
+
 metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../../nomad-meta-info/meta_info/nomad_meta_info/molcas.nomadmetainfo.json"))
 metaInfoEnv, warnings = loadJsonFile(filePath=metaInfoPath,
                                      dependencyLoader=None,
@@ -67,6 +69,14 @@ class MolcasContext(object):
     def __init__(self):
         self.data = {}
         self.last_line = None
+        self.current_module_name = None
+        self.section_refs = {}
+
+    def onOpen_section_method(self, backend, gindex, section):
+        self.section_refs['method'] = gindex
+
+    def onOpen_section_system(self, backend, gindex, section):
+        self.section_refs['system'] = gindex
 
     def startedParsing(self, fname, parser):
         pass
@@ -80,12 +90,60 @@ class MolcasContext(object):
         self.last_line = None
 
     def onClose_section_single_configuration_calculation(self, backend, gindex, section):
-        pass
-        #print(section)
+        backend.addValue('single_configuration_to_calculation_method_ref',
+                         self.section_refs['method'])
+        backend.addValue('single_configuration_calculation_to_system_ref',
+                         self.section_refs['system'])
 
     def onClose_section_method(self, backend, gindex, section):
-        pass
-        #scftype = section['x_molcas_scf_name']
+        #print('SECTION', section)
+        #methods = section['x_molcas_method']
+        xc = []
+
+        methods = section['x_molcas_method_name']
+        assert len(methods) == 1, methods
+        method = methods[0]
+
+        uhf = method.startswith('UHF ')
+        if uhf:
+            method = method[4:].strip()
+        backend.addValue('x_molcas_uhf', uhf)
+
+        if method == 'SCF':
+            # XXX distinguish somehow between these two?
+            esm = 'DFT'
+            xc = ['HF_X']
+        elif method in ['RASSCF', 'RAS-CI', 'CASPT2']:
+            esm = method
+        elif method in functionals:
+            esm = 'DFT'
+            xc = functionals[method]
+            assert xc is not None, 'no xc: %s' % method
+        else:
+            raise ValueError('method: %s' % method)
+
+        backend.addValue('electronic_structure_method', method)
+        for xcfunc in xc:
+            g = backend.openSection('section_XC_functionals')
+            backend.addValue('XC_functional_name', xcfunc)
+            backend.closeSection('section_XC_functionals', g)
+
+
+        if 0:
+            if methods is not None:
+                assert len(methods) == 1
+                method = methods[0]
+                scfnames = section['x_molcas_method_name']
+                assert len(scfnames) == 1, scfnames
+                scfname = scfnames[0]
+                if scfname == 'SCF':
+                    backend.addValue('electronic_structure_method', 'DFT')
+                    g = backend.openSection('section_XC_functionals')
+                    backend.addValue('XC_functional_name', 'HF_X')
+                    backend.closeSection('section_XC_functionals', g)
+
+        #print(self.current_module_name)
+        #scftype = section['x_molcas_method_name']
         #if scftype is not None:
         #    print('SCF', scftype)
 
@@ -156,7 +214,6 @@ class MolcasContext(object):
                 ], **kwargs)
         return sm
 
-
 context = MolcasContext()
 
 def get_inputfile_echo_sm():
@@ -172,7 +229,7 @@ def get_system_sm():
            name='structure',
            sections=['section_system'],
            subMatchers=[
-               SM(r'\s*--------', name='bar'),
+               SM(r'\s*--------+', name='bar'),
                SM(r'.*?Cartesian Coordinates / Bohr, Angstrom\s*\*+',
                   name='coords',
                   subMatchers=[
@@ -245,31 +302,30 @@ def molcas_main_loop_sm():
            forwardMatch=True,
            name='module',
            subMatchers=[
-               #module_sm(r'(?:seward|gateway)',
                mw(r'(gateway|seward)',
                   r'\s*MOLCAS executing module (GATEWAY|SEWARD)', name='seward',
                   subMatchers=[
                       get_system_sm()
                   ]),
-               #module_sm(r'(?:ras)?scf',
-               #          subModules=[
-               mw(r'(?:ras)?scf', r'\s*MOLCAS executing module ((?:RAS)?SCF)', name='scf',
+               mw(r'(?:ras)?scf', r'\s*MOLCAS executing module (?:SCF|RASSCF)', name='scf',
                   sections=['section_method', 'section_single_configuration_calculation'],
                   subMatchers=[
-                      SM(r'\s*(?P<x_molcas_scf_name>\S+)\s*iterations: Energy and convergence statistics',
+                      SM(r'\s*(?P<x_molcas_method_name>.*?)\s*iterations: Energy and convergence statistics',
                          name='scfiter'),
+                      SM(r'\s*CI only, no orbital optimization',
+                         fixedStartValues={'x_molcas_method_name': 'RAS-CI'}),
                       SM(r'\s*Total SCF energy\s*(?P<energy_total__hartree>\S+)', name='E-tot'),
                       SM(r'\s*RASSCF root number\s*\d+\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)', name='E-ras'),
                   ]),
                mw(r'caspt2', r'\s*MOLCAS executing module CASPT2',
                   name='caspt2',
                   sections=['section_method', 'section_single_configuration_calculation'],
+                  fixedStartValues={'x_molcas_method_name': 'CASPT2'},
                   subMatchers=[
                       SM(r'\s*Total energy:\s*(?P<energy_total__hartree>\S+)', name='E-caspt2')
                   ]),
                mw(r'slapaf', r'\s*MOLCAS executing module (SLAPAF)|\s*Specification of the internal coordinates according to the user-defined',
                   name='slapaf',
-                  #sections=['section_system', 'section_single_configuration_calculation'],
                   subMatchers=[
                       SM(r'\*\s*Energy Statistics for Geometry Optimization',
                          name='opt-loop',
