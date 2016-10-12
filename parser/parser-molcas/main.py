@@ -113,8 +113,14 @@ class MolcasContext(object):
             # XXX distinguish somehow between these two?
             esm = 'DFT'
             xc = ['HF_X']
-        elif method in ['RASSCF', 'RAS-CI', 'CASPT2']:
+        elif method in ['RASSCF', 'RAS-CI', 'CASPT2', 'CCSDT']:
             esm = method
+        elif method in ['CASVB', 'MRCI']:
+            esm = 'MRCISD'
+        elif method == 'MCPF':
+            esm = method  ## Not defined by nomad
+        elif method == 'MBPT2':
+            esm = 'MP2'
         elif method in functionals:
             esm = 'DFT'
             xc = functionals[method]
@@ -216,12 +222,12 @@ class MolcasContext(object):
 
 context = MolcasContext()
 
-def get_inputfile_echo_sm():
-    m = SM(r'\+\+\s*----+\s*Input file\s*---+',
-           endReStr='--\s*-------+',
-           sections=['section_method'],
-           name='inputfile')
-    return m
+#def get_inputfile_echo_sm():
+#    m = SM(r'\+\+\s*----+\s*Input file\s*---+',
+#           endReStr='--\s*-------+',
+#           sections=['section_method'],
+#           name='inputfile')
+#    return m
 
 
 def get_system_sm():
@@ -247,7 +253,7 @@ def get_finalresults_sm():  # Other modes than SCF/KS-DFT?
            sections=['section_single_configuration_calculation'],
            name='results',
            subMatchers=[
-               SM(r'\s*Total SCF energy\s*(?P<energy_total__eV>\S+)', name='etot')  # XXX eV?
+               SM(r'\s*Total SCF energy\s*(?P<energy_total__hartree>\S+)', name='etot')
            ])
     return m
 
@@ -267,12 +273,36 @@ molcas_modules = ('alaska|caspt2|casvb|ccsdt|cpf|expbas|ffpt|gateway|'
                   'mckinley|mclr|motra|mrci|numerical_gradient|rasscf|'
                   'rassi|scf|seward|slapaf|vibrot').split('|')
 
+ignore_modules = {'alaska',  # OK
+                  'numerical_gradient',  # OK
+                  'rassi',  # OK
+                  'motra',
+                  'guga',
+                  'ffpt',
+                  'genano',
+                  'grid_it',
+                  'loprop',
+                  'guessorb',
+                  'expbas',
+                  'vibrot',
+                  'mckinley'
+                  #'last_energy',
+}
+
 def get_anymodule_sms():
     sms = []
     for modulename in molcas_modules:
-        sms.append(SM(r'--- Start Module:\s*%s' % modulename, name=modulename))
-        #sms.append(SM(r'\s*MOLCAS executing module %s' % modulename.upper(),
-        #              name=modulename))
+        adhoc = None
+        if modulename not in ignore_modules:
+            class AdHoc:
+                def __init__(self, name):
+                    self.name = name
+                def __call__(self, parser):
+                    raise ValueError('module: %s' % self.name)
+            adhoc = AdHoc(modulename)
+        sms.append(SM(r'--- Start Module:\s*%s' % modulename,
+                      adHoc=adhoc,
+                      name=modulename))
     return sms
 
 #def module_sm(name, *args, **kwargs):
@@ -295,6 +325,57 @@ def mw(modname, *args, **kwargs):
            ])
     return m
 
+def mod_pattern(lower, upper=None):
+    if upper is None:
+        upper = lower.upper()
+    return (r'---\s*Start Module:\s*{0}|'
+            r'\s*MOLCAS executing module\s*{1}'.format(lower, upper))
+
+# Define these separately or not?
+def startmod_pattern(name):
+    return r'---\s*Start Module:\s*{}'.format(name)
+def execmod_pattern(name):
+    return r'\s*MOLCAS executing module\s*{}'.format(name)
+
+def gateway_seward():
+    m = SM(mod_pattern(r'(:?gateway|seward)'),
+           #weak=True,
+           name='gate/seward',
+           #r'\s*MOLCAS executing module (GATEWAY|SEWARD)', name='seward',
+           subMatchers=[
+               get_system_sm()
+           ])
+    return m
+
+def scf_rasscf():
+    m = SM(mod_pattern(r'(:?ras)?scf'),
+           name='(ras)scf', #r'(?:ras)?scf', r'\s*MOLCAS executing module (?:SCF|RASSCF)', name='scf',
+           #sections=['section_method', 'section_single_configuration_calculation'],
+           subMatchers=[  # XXX opens method section even if there is no outpout
+               SM(r'\s*(?P<x_molcas_method_name>.*?)\s*iterations: Energy and convergence statistics',
+                  sections=['section_method'],
+                  name='scfiter'),
+               SM(r'\s*CI only, no orbital optimization',
+                  sections=['section_method'],
+                  fixedStartValues={'x_molcas_method_name': 'RAS-CI'}),
+               SM(r'\s*Total SCF energy\s*(?P<energy_total__hartree>\S+)', name='E-tot',
+                  sections=['section_single_configuration_calculation']),
+               SM(r'\s*RASSCF root number\s*\d+\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)', name='E-ras',
+                  sections=['section_single_configuration_calculation']),
+           ])
+    return m
+
+def caspt2():
+    m = SM(mod_pattern(r'caspt2'),
+           #caspt2', r'\s*MOLCAS executing module CASPT2',
+           name='caspt2',  # XXX opens section even if there is no output
+           sections=['section_method', 'section_single_configuration_calculation'],
+           fixedStartValues={'x_molcas_method_name': 'CASPT2'},
+           subMatchers=[
+               SM(r'\s*Total energy:\s*(?P<energy_total__hartree>\S+)', name='E-caspt2')
+           ])
+    return m
+
 def molcas_main_loop_sm():
     m = SM(r'--- Start Module:\s*(?:%s)' % '|'.join(molcas_modules),
            endReStr='--- Stop Module:',
@@ -302,29 +383,12 @@ def molcas_main_loop_sm():
            forwardMatch=True,
            name='module',
            subMatchers=[
-               mw(r'(gateway|seward)',
-                  r'\s*MOLCAS executing module (GATEWAY|SEWARD)', name='seward',
-                  subMatchers=[
-                      get_system_sm()
-                  ]),
-               mw(r'(?:ras)?scf', r'\s*MOLCAS executing module (?:SCF|RASSCF)', name='scf',
-                  sections=['section_method', 'section_single_configuration_calculation'],
-                  subMatchers=[
-                      SM(r'\s*(?P<x_molcas_method_name>.*?)\s*iterations: Energy and convergence statistics',
-                         name='scfiter'),
-                      SM(r'\s*CI only, no orbital optimization',
-                         fixedStartValues={'x_molcas_method_name': 'RAS-CI'}),
-                      SM(r'\s*Total SCF energy\s*(?P<energy_total__hartree>\S+)', name='E-tot'),
-                      SM(r'\s*RASSCF root number\s*\d+\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)', name='E-ras'),
-                  ]),
-               mw(r'caspt2', r'\s*MOLCAS executing module CASPT2',
-                  name='caspt2',
-                  sections=['section_method', 'section_single_configuration_calculation'],
-                  fixedStartValues={'x_molcas_method_name': 'CASPT2'},
-                  subMatchers=[
-                      SM(r'\s*Total energy:\s*(?P<energy_total__hartree>\S+)', name='E-caspt2')
-                  ]),
-               mw(r'slapaf', r'\s*MOLCAS executing module (SLAPAF)|\s*Specification of the internal coordinates according to the user-defined',
+               gateway_seward(),
+               scf_rasscf(),
+               caspt2(),
+               SM(r'%s|%s' % (mod_pattern(r'slapaf'),
+                              # Sometimes the damn thing starts without a proper header!!  ARGH!
+                              r's*Specification of the internal coordinates according to the user-defined'),
                   name='slapaf',
                   subMatchers=[
                       SM(r'\*\s*Energy Statistics for Geometry Optimization',
@@ -345,7 +409,73 @@ def molcas_main_loop_sm():
                                               r'\s*ATOM\s*X\s*Y\s*Z',
                                               r'\s*(\S+)\s*(\S+)\s*(\S+)\s*(\S+)')
                              ])
-                  ])
+                  ]),
+               # last_energy just means it calls some other modules with annoyingly irregular output format
+               SM(mod_pattern(r'last_energy'),
+                  name='last',
+                  subMatchers=[
+                      gateway_seward(),
+                      scf_rasscf(),
+                      caspt2(),
+                  ]),
+               SM(mod_pattern('casvb'),
+                  name='casvb',
+                  sections=['section_method'],
+                  fixedStartValues={'x_molcas_method_name': 'CASVB'},
+                  subMatchers=[
+                      SM('\s*CASSCF energy\s*:\s*(?P<energy_total__hartree>\S+)',
+                         sections=['section_single_configuration_calculation'],
+                         name='e-tot')
+                  ]),
+               SM(mod_pattern('mrci'),
+                  name='mrci',
+                  sections=['section_method'],
+                  fixedStartValues={'x_molcas_method_name': 'MRCI'},
+                  subMatchers=[
+                      SM(r'\s*CI ENERGY:\s*(?P<energy_total__hartree>\S+)',
+                         sections=['section_single_configuration_calculation'])
+                  ]),
+               SM(mod_pattern('cpf', 'CPFMCPF'),
+                  name='cpf',
+                  sections=['section_method'],
+                  fixedStartValues={'x_molcas_method_name': 'MCPF'},
+                  subMatchers=[
+                      SM(r'\s*FINAL MCPF ENERGY\s*(?P<energy_total__hartree>\S+)',
+                         sections=['section_single_configuration_calculation'])
+                  ]),
+               SM(mod_pattern('ccsdt', r'CCSD\(T\)'),
+                  name='ccsdt',
+                  sections=['section_method'],
+                  fixedStartValues={'x_molcas_method_name': 'CCSDT'},
+                  subMatchers=[
+                      SM(r'\s*Total energy \(diff\)\s*:\s*(?P<energy_total__hartree>\S+)',
+                         sections=['section_single_configuration_calculation'])
+                  ]),
+               SM(mod_pattern('mbpt2'),
+                  name='mbpt2',
+                  fixedStartValues={'x_molcas_method_name': 'MBPT2'},
+                  sections=['section_method', 'section_single_configuration_calculation'],
+                  subMatchers=[
+                      SM(r'\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)\s*a\.u\.')
+                  ]),
+               SM(mod_pattern('mclr'),
+                  name='mclr',
+                  subMatchers=[
+                      SM(r'\s*\*\s*Harmonic frequencies in cm-1\s*\*',
+                         endReStr=r'\s*\*\s*THERMOCHEMISTRY',
+                         sections=['section_single_configuration_calculation'],
+                         subMatchers=[
+                             SM(r'\s*Symmetry\s*(?P<x_molcas_frequency_symmetry>\S+)',
+                                name='symm',
+                                repeats=True,
+                                sections=['x_molcas_section_frequency'],
+                                subMatchers=[
+                                    SM(r'\s*Freq\.\s*i(?P<x_molcas_imaginary_frequency_value__cm_1>\S+)', name='ifreq'),
+                                    SM(r'\s*Freq\.\s*(?P<x_molcas_frequency_value>\S+)', name='freq'),
+                                    SM(r'\s*Intensity:\s*(?P<x_molcas_frequency_intensity__km_mol_1>\S+)', name='intensity')
+                                ])
+                         ]),
+                  ]),
            ] + get_anymodule_sms())
     return m
 

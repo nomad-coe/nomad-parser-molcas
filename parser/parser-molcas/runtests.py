@@ -38,12 +38,14 @@ for i, testfile in enumerate(testfiles):
     if i % world.size != world.rank:
         continue
     dirname, basename = os.path.split(testfile)
-    print(basename)
+    #print(testfile)
+    #print(basename)
     py = 'python'
     if platform.node() == 'labdev-nomad':
         py = '/labEnv3/bin/python'
     args = [py, 'main.py', '--annotate']
     args.append(testfile)
+    print(' '.join(args))
     proc = Popen(args, stdout=PIPE)
     txt = proc.stdout.read()
     with open('%s.json' % testfile, 'w') as fd:
