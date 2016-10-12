@@ -66,14 +66,28 @@ parser_info = {'name': 'molcas-parser', 'version': '1.0'}
 class MolcasContext(object):
     def __init__(self):
         self.data = {}
+        self.last_line = None
 
     def startedParsing(self, fname, parser):
         pass
 
+    def adhoc_store_line(self, parser):
+        self.last_line = parser.fIn.readline()
+
+    def adhoc_pushback_last(self, parser):
+        assert self.last_line is not None
+        parser.fIn.pushbackLine(self.last_line)
+        self.last_line = None
+
+    def onClose_section_single_configuration_calculation(self, backend, gindex, section):
+        pass
+        #print(section)
+
     def onClose_section_method(self, backend, gindex, section):
-        scftype = section['x_molcas_scf_name']
-        if scftype is not None:
-            print('SCF', scftype)
+        pass
+        #scftype = section['x_molcas_scf_name']
+        #if scftype is not None:
+        #    print('SCF', scftype)
 
     def onClose_section_system(self, backend, gindex, section):
         matrix = self.data.pop('coordinates')
@@ -190,51 +204,92 @@ def get_header_sm():
            ])
     return m
 
-def molcas_main_loop_sm():
-    m = SM(r'',
-           repeats=True,
-           subMatchers=[
-               SM(r'',
-                  name='main',
-                  endReStr=r'\s*Happy landing!',
-                  weak=True,
-                  #forwardMatch=True,
-                  subFlags=SM.SubFlags.Unordered,
-                  #repeats=True,
-                  subMatchers=[
-                      get_system_sm(),
-               #SM(r'')  # Always eat the line if another matcher does not
-                  ])
-           ])
-    return m
-
+# Does not include 'auto'
 molcas_modules = ('alaska|caspt2|casvb|ccsdt|cpf|expbas|ffpt|gateway|'
                   'genano|grid_it|guessorb|guga|last_energy|loprop|mbpt2|'
                   'mckinley|mclr|motra|mrci|numerical_gradient|rasscf|'
-                  'rassi|scf|slapaf|vibrot').split('|')
+                  'rassi|scf|seward|slapaf|vibrot').split('|')
 
 def get_anymodule_sms():
     sms = []
     for modulename in molcas_modules:
-        sms.append(SM(r'\s*MOLCAS executing module %s' % modulename.upper(),
-                      name=modulename))
+        sms.append(SM(r'--- Start Module:\s*%s' % modulename, name=modulename))
+        #sms.append(SM(r'\s*MOLCAS executing module %s' % modulename.upper(),
+        #              name=modulename))
     return sms
 
-def molcas_main_loop_sm2():
-    m = SM(r'--- Start Module: (\S+)',
+#def module_sm(name, *args, **kwargs):
+#    m = SM(r'--- Start Module:\s*(%s)' % name, *args, name=name, **kwargs)
+#    return m
+
+# mw = "module-wrapper" for SM
+# The idea is to guarantee that matchers modules that do not always write a proper header (e.g. SLAPAF)
+# are invoked when the module starts, but that the matcher's sections are only opened if recognizable
+# output is written (sometimes they write nothing).
+#
+# Typically, pass a matcher which opens some sections but will only match actual output of the module
+# This wrapper will call the wrapped matcher when the module is started, but the wrapped matcher
+# will only match if the output is actually there, and also will only open its sections in that case.
+def mw(modname, *args, **kwargs):
+    m = SM(r'--- Start Module:\s*%s' % modname,
+           name=modname,
+           subMatchers=[
+               SM(*args, **kwargs)
+           ])
+    return m
+
+def molcas_main_loop_sm():
+    m = SM(r'--- Start Module:\s*(?:%s)' % '|'.join(molcas_modules),
            endReStr='--- Stop Module:',
            repeats=True,
+           forwardMatch=True,
            name='module',
            subMatchers=[
-               SM(r'\s*MOLCAS executing module SEWARD', name='seward',
+               #module_sm(r'(?:seward|gateway)',
+               mw(r'(gateway|seward)',
+                  r'\s*MOLCAS executing module (GATEWAY|SEWARD)', name='seward',
                   subMatchers=[
                       get_system_sm()
                   ]),
-               SM(r'\s*MOLCAS executing module SCF', name='scf',
-                  sections=['section_method'],
+               #module_sm(r'(?:ras)?scf',
+               #          subModules=[
+               mw(r'(?:ras)?scf', r'\s*MOLCAS executing module ((?:RAS)?SCF)', name='scf',
+                  sections=['section_method', 'section_single_configuration_calculation'],
                   subMatchers=[
-                      SM(r'\s*(?P<x_molcas_scf_name>\S+)\s*iterations: Energy and convergence statistics')
+                      SM(r'\s*(?P<x_molcas_scf_name>\S+)\s*iterations: Energy and convergence statistics',
+                         name='scfiter'),
+                      SM(r'\s*Total SCF energy\s*(?P<energy_total__hartree>\S+)', name='E-tot'),
+                      SM(r'\s*RASSCF root number\s*\d+\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)', name='E-ras'),
                   ]),
+               mw(r'caspt2', r'\s*MOLCAS executing module CASPT2',
+                  name='caspt2',
+                  sections=['section_method', 'section_single_configuration_calculation'],
+                  subMatchers=[
+                      SM(r'\s*Total energy:\s*(?P<energy_total__hartree>\S+)', name='E-caspt2')
+                  ]),
+               mw(r'slapaf', r'\s*MOLCAS executing module (SLAPAF)|\s*Specification of the internal coordinates according to the user-defined',
+                  name='slapaf',
+                  #sections=['section_system', 'section_single_configuration_calculation'],
+                  subMatchers=[
+                      SM(r'\*\s*Energy Statistics for Geometry Optimization',
+                         name='opt-loop',
+                         endReStr=r'\s*$',
+                         sections=['section_single_configuration_calculation'],
+                         subMatchers=[
+                             SM(r'\s*\d+\s*\S+\s*', name='opt-iter', repeats=True, forwardMatch=True, adHoc=context.adhoc_store_line),
+                             SM(r'\s*$', forwardMatch=True, adHoc=context.adhoc_pushback_last, name='pushback'),
+                             SM(r'\s*\d+\s*(?P<energy_total__hartree>\S+)\s*', name='opt-iter', repeats=True),
+                         ]),
+                      SM(r'\s*\*\s*Nuclear coordinates for the next iteration / Bohr',
+                         endReStr=r'\s*$',
+                         name='newcoords',
+                         sections=['section_system'],
+                         subMatchers=[
+                             context.multi_sm('coordinates',
+                                              r'\s*ATOM\s*X\s*Y\s*Z',
+                                              r'\s*(\S+)\s*(\S+)\s*(\S+)\s*(\S+)')
+                             ])
+                  ])
            ] + get_anymodule_sms())
     return m
 
@@ -248,8 +303,7 @@ mainFileDescription = SM(
     subMatchers=[
         get_header_sm(),
         #get_inputfile_echo_sm(),
-        molcas_main_loop_sm2(),
-        #molcas_main_loop_sm(),
+        molcas_main_loop_sm(),
         SM(r'x^',  # force parser to parse the whole file
            name='impossible')
     ])
