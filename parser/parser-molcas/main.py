@@ -71,6 +71,8 @@ class MolcasContext(object):
         self.last_line = None
         self.current_module_name = None
         self.section_refs = {}
+        self.basis_info = []
+        self.buffered_lines = {}
 
     def onOpen_section_method(self, backend, gindex, section):
         self.section_refs['method'] = gindex
@@ -95,7 +97,84 @@ class MolcasContext(object):
         backend.addValue('single_configuration_calculation_to_system_ref',
                          self.section_refs['system'])
 
+        #print(self.buffered_lines.keys())
+
+        def lines2arrays(name):
+            elines = self.buffered_lines.pop('energy_%s' % name)
+            olines = self.buffered_lines.pop('occupations_%s' % name)
+            energies = []
+            occupations = []
+            assert len(elines) == len(olines)
+            for l1, l2 in zip(elines, olines):
+                energies += l1.split()[1:]  # Energy <numbers>
+                occupations += l2.split()[2:]  # Occ. No.  <numbers>
+            assert len(energies) == len(occupations)
+            energies = np.array(energies).astype(float)
+            energies = convert_unit(energies, 'hartree')
+            occupations = np.array(occupations).astype(float)
+
+            # Sort by energy:
+            args = np.argsort(energies)
+            energies = energies[args]
+            occupations = occupations[args]
+            return energies.reshape(1, 1, -1), occupations.reshape(1, 1, -1)
+
+        energies = None
+
+        try:
+            energies, occupations = lines2arrays('nospin')
+            nspins = 1
+            nstates = energies.shape[-1]
+        except KeyError:
+            pass
+
+        try:
+            ealpha, oalpha = lines2arrays('alpha')
+            ebeta, obeta = lines2arrays('beta')
+        except KeyError:
+            pass
+        else:
+            # The spinup and spindown (alpha, beta)
+            # arrays can have different lengths
+            # so we must allocate arrays that are big enough
+            # and fill out with zeros or something else
+            assert energies is None
+            nspins = 2
+            nstates = max(ealpha.shape[-1], ebeta.shape[-1])
+            energies = np.empty((nspins, 1, nstates))
+            # We will only fill out the values that we have.
+            # The rest will be nan:
+            energies.fill(np.nan)
+            occupations = np.zeros((nspins, 1, nstates))
+            energies[0, :, :ealpha.shape[2]] = ealpha[0]
+            occupations[0, :, :ealpha.shape[2]] = oalpha[0]
+            energies[1, 0, :ebeta.shape[2]] = ebeta[0]
+            occupations[1, 0, :ebeta.shape[2]] = obeta[0]
+
+        if energies is not None:
+            for arr in [energies, occupations]:
+                assert arr.shape == (nspins, 1, nstates)
+            g = backend.openSection('section_eigenvalues')
+            backend.addArrayValues('eigenvalues_values', energies)
+            backend.addArrayValues('eigenvalues_occupation', occupations)
+            backend.closeSection('section_eigenvalues', g)
+
+
     def onClose_section_method(self, backend, gindex, section):
+
+        for line in self.basis_info:
+            m = re.match('\s*Basis set label:(.*?)\.(.*?)\s*$', line)
+            atomlabel, name = m.group(1, 2)
+            # The terrible syntax in molcas has a lot of dots everywhere.
+            # Replace sequences of dots with single dots to make things
+            # reasonable.
+            name = re.sub(r'\.+', '.', name).strip('.')
+            g = backend.openSection('x_molcas_section_basis')
+            backend.addValue('x_molcas_basis_atom_label', atomlabel)
+            backend.addValue('x_molcas_basis_name', name)
+            backend.closeSection('x_molcas_section_basis', g)
+        del self.basis_info[:]
+
         #print('SECTION', section)
         #methods = section['x_molcas_method']
         xc = []
@@ -162,6 +241,18 @@ class MolcasContext(object):
         backend.addArrayValues('atom_labels', atom_labels)
         backend.addArrayValues('atom_positions', coords)
         backend.addArrayValues('configuration_periodic_dimensions', np.zeros(3, bool))
+
+    def adhoc_add_basis_set(self, parser):
+        line = parser.fIn.readline()
+        self.basis_info.append(line)
+
+    def adhoc_add_energies(self, parser):
+        line = parser.fIn.readline()
+        self.energies.append(line)
+
+    def adhoc_add_occupations(self, parser):
+        line = parser.fIn.readline()
+        self.occupations.append(line)
 
     # multi_sm copied from Siesta/GULP
     def multi_sm(self, name, startpattern, linepattern, endmatcher=None,
@@ -343,7 +434,37 @@ def gateway_seward():
            name='gate/seward',
            #r'\s*MOLCAS executing module (GATEWAY|SEWARD)', name='seward',
            subMatchers=[
+               SM(r'\s*Basis set label:(.*?)\s*$',
+                  forwardMatch=True,
+                  repeats=True,
+                  adHoc=context.adhoc_add_basis_set,
+                  name='basis'),
                get_system_sm()
+           ])
+    return m
+
+def eigenvalue_line_matcher(pattern, spinname):
+
+    class AdHocLineAccumulator:
+        def __init__(self, var):
+            self.var = var
+
+        def __call__(self, parser):
+            line = parser.fIn.readline()
+            context.buffered_lines.setdefault(self.var, []).append(line)
+            #print(context.buffered_lines)
+            #sdfkjsdfkj
+
+    m = SM(pattern, name=spinname,
+           subMatchers=[
+               SM(r'\s*Orbital',
+                  repeats=True,
+                  subMatchers=[
+                      SM(r'\s*Energy\s*(.*)', name='energies', adHoc=AdHocLineAccumulator('energy_%s' % spinname),
+                         forwardMatch=True),
+                      SM(r'\s*Occ\. No\.\s*(.*)', name='occ', adHoc=AdHocLineAccumulator('occupations_%s' % spinname),
+                         forwardMatch=True)
+                  ])
            ])
     return m
 
@@ -358,10 +479,21 @@ def scf_rasscf():
                SM(r'\s*CI only, no orbital optimization',
                   sections=['section_method'],
                   fixedStartValues={'x_molcas_method_name': 'RAS-CI'}),
-               SM(r'\s*Total SCF energy\s*(?P<energy_total__hartree>\S+)', name='E-tot',
-                  sections=['section_single_configuration_calculation']),
-               SM(r'\s*RASSCF root number\s*\d+\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)', name='E-ras',
-                  sections=['section_single_configuration_calculation']),
+               SM(r'\s*\*\s*Final Results\s*\*',
+                  name='finalresults',
+                  sections=['section_single_configuration_calculation'],
+                  subMatchers=[
+                      SM(r'\s*Total \S+ energy\s*(?P<energy_total__hartree>\S+)', name='E-tot'),
+                      SM(r'\s*RASSCF root number\s*\d+\s*Total energy\s*=\s*(?P<energy_total__hartree>\S+)', name='E-ras'),
+                      SM(r'\s*Molecular orbitals:',
+                         name='mol-orb',
+                         endReStr=r'\s*Molecular Charges:',
+                         subMatchers=[
+                             eigenvalue_line_matcher(r'\s*Title:\s*.*?\s*orbitals\s*$', 'nospin'),
+                             eigenvalue_line_matcher(r'\s*Title:\s*.*?\s*orbitals\s*\(alpha\)', 'alpha'),
+                             eigenvalue_line_matcher(r'\s*Title:\s*.*?\s*orbitals\s*\(beta\)', 'beta')
+                         ])
+                  ])
            ])
     return m
 
@@ -390,6 +522,14 @@ def molcas_main_loop_sm():
                               # Sometimes the damn thing starts without a proper header!!  ARGH!
                               r's*Specification of the internal coordinates according to the user-defined'),
                   name='slapaf',
+                  # The slapaf module writes forces, but only for a symmetry-reduced set of atoms.
+                  # Therefore they are not useful to parse.  We could parse the set of symmetries probably
+                  # and somehow make it possible to get the full set of Cartesian forces,
+                  # but the operation would be very complicated.
+                  #
+                  # Let us consider parsing the reduced forces and
+                  # symmetries the day that someone wants to implement
+                  # this symmetry-unreduction (this will not happen).
                   subMatchers=[
                       SM(r'\*\s*Energy Statistics for Geometry Optimization',
                          name='opt-loop',
@@ -398,7 +538,12 @@ def molcas_main_loop_sm():
                          subMatchers=[
                              SM(r'\s*\d+\s*\S+\s*', name='opt-iter', repeats=True, forwardMatch=True, adHoc=context.adhoc_store_line),
                              SM(r'\s*$', forwardMatch=True, adHoc=context.adhoc_pushback_last, name='pushback'),
-                             SM(r'\s*\d+\s*(?P<energy_total__hartree>\S+)\s*', name='opt-iter', repeats=True),
+                             # Molcas is supposed to have spaces between the numbers, but with grdNorm/Max,
+                             # it sometimes writes 0.051834-0.037589 in one.  Thus we use -?[^\s-]+ to match such a number.
+                             SM(r'\s*\d+\s*(?P<energy_total__hartree>\S+)\s*'
+                                r'\S+\s*(?P<x_molcas_slapaf_grad_norm>-?[^\s-]+)\s*'
+                                r'(?P<x_molcas_slapaf_grad_max>\S+)',
+                                name='opt-iter', repeats=True),
                          ]),
                       SM(r'\s*\*\s*Nuclear coordinates for the next iteration / Bohr',
                          endReStr=r'\s*$',
