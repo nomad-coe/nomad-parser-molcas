@@ -31,6 +31,7 @@ object MolcasParser extends SimpleExternalParserGenerator(
     "--uri", "${mainFileUri}", "${mainFilePath}"),
   resList = Seq(
     "parser-molcas/main.py",
+    "parser-molcas/functionals.py",
     "parser-molcas/setup_paths.py",
     "nomad_meta_info/public.nomadmetainfo.json",
     "nomad_meta_info/common.nomadmetainfo.json",
