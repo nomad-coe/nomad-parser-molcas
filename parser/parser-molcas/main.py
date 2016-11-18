@@ -234,8 +234,10 @@ class MolcasContext(object):
 
     def onClose_section_system(self, backend, gindex, section):
         matrix = self.data.pop('coordinates')
-        atom_labels = matrix[:, 1]
-        coords = matrix[:, 2:5].astype(float)
+        assert matrix.shape[1] == 4
+        atom_labels = matrix[:, 0]
+        coords = matrix[:, 1:4].astype(float)
+        assert coords.shape[1] == 3
         coords = convert_unit(coords, 'bohr')
 
         backend.addArrayValues('atom_labels', atom_labels)
