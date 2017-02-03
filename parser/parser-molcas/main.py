@@ -207,7 +207,7 @@ class MolcasContext(object):
         else:
             raise ValueError('method: %s' % method)
 
-        backend.addValue('electronic_structure_method', method)
+        backend.addValue('electronic_structure_method', esm)
         for xcfunc in xc:
             g = backend.openSection('section_XC_functionals')
             backend.addValue('XC_functional_name', xcfunc)
