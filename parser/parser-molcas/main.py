@@ -58,13 +58,13 @@ parser_info = {'name': 'molcas-parser', 'version': '1.0'}
 #    'section_method',
 #    'section_frame_sequence',
 #    'section_sampling_method',
-#    'single_configuration_to_calculation_method_ref',
+#    'single_configuration_calculation_to_method_ref',
 #    'single_configuration_calculation_to_system_ref',
-#    'atom_forces_raw',
-#    'frame_sequence_local_frames_ref',
-#    'frame_sequence_to_sampling_ref',
+#    'atom_forces', # raw
+#    'frame_sequence_to_frames_ref',
+#    'frame_sequence_to_sampling_method_ref',
 
-#    'XC_functional_name',
+#    'xc_functional_name',
 #    'smearing_kind',
 #    'smearing_width'
 #    'eigenvalues_kpoints',
@@ -76,7 +76,7 @@ parser_info = {'name': 'molcas-parser', 'version': '1.0'}
 #    'band_segm_labels',
 #    'dos_energies',
 #    'dos_values',
-#    'section_XC_functionals',
+#    'section_xc_functionals',
 
 
 
@@ -107,7 +107,7 @@ class MolcasContext(object):
         self.last_line = None
 
     def onClose_section_single_configuration_calculation(self, backend, gindex, section):
-        backend.addValue('single_configuration_to_calculation_method_ref',
+        backend.addValue('single_configuration_calculation_to_method_ref',
                          self.section_refs['method'])
         backend.addValue('single_configuration_calculation_to_system_ref',
                          self.section_refs['system'])
@@ -224,9 +224,9 @@ class MolcasContext(object):
 
         backend.addValue('electronic_structure_method', esm)
         for xcfunc in xc:
-            g = backend.openSection('section_XC_functionals')
-            backend.addValue('XC_functional_name', xcfunc)
-            backend.closeSection('section_XC_functionals', g)
+            g = backend.openSection('section_xc_functionals')
+            backend.addValue('xc_functional_name', xcfunc)
+            backend.closeSection('section_xc_functionals', g)
 
 
         if 0:
@@ -238,9 +238,9 @@ class MolcasContext(object):
                 scfname = scfnames[0]
                 if scfname == 'SCF':
                     backend.addValue('electronic_structure_method', 'DFT')
-                    g = backend.openSection('section_XC_functionals')
-                    backend.addValue('XC_functional_name', 'HF_X')
-                    backend.closeSection('section_XC_functionals', g)
+                    g = backend.openSection('section_xc_functionals')
+                    backend.addValue('xc_functional_name', 'HF_X')
+                    backend.closeSection('section_xc_functionals', g)
 
         #print(self.current_module_name)
         #scftype = section['x_molcas_method_name']
