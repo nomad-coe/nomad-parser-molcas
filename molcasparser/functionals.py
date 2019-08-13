@@ -1,4 +1,4 @@
-# Copyright 2016-2018 The NOMAD Developers Group
+# Copyright 2016-2018 Ask Hjorth Larsen, Fawzi Mohamed
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

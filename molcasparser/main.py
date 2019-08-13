@@ -1,4 +1,4 @@
-# Copyright 2016-2018 The NOMAD Developers Group
+# Copyright 2016-2018 Ask Hjorth Larsen, Fawzi Mohamed
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 from __future__ import print_function
 import os
 import sys
-import setup_paths
 import re
+import logging
 
 import numpy as np
 from ase import Atoms
@@ -29,10 +29,11 @@ from nomadcore.simple_parser import mainFunction, SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 from nomadcore.unit_conversion.unit_conversion \
     import register_userdefined_quantity, convert_unit
+import nomad_meta_info
 
-from functionals import functionals
+from .functionals import functionals
 
-metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../../../nomad-meta-info/meta_info/nomad_meta_info/molcas.nomadmetainfo.json"))
+metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(nomad_meta_info.__file__)), "molcas.nomadmetainfo.json"))
 metaInfoEnv, warnings = loadJsonFile(filePath=metaInfoPath,
                                      dependencyLoader=None,
                                      extraArgsHandling=InfoKindEl.ADD_EXTRA_ARGS,
@@ -640,29 +641,53 @@ def molcas_main_loop_sm():
            ] + get_anymodule_sms())
     return m
 
-mainFileDescription = SM(
-    name='root',
-    weak=True,
-    startReStr='',
-    fixedStartValues={'program_name': 'Molcas',
-                      'program_basis_set_type': 'gaussians'},
-    sections=['section_run'],
-    subMatchers=[
-        get_header_sm(),
-        #get_inputfile_echo_sm(),
-        molcas_main_loop_sm(),
-        SM(r'x^',  # force parser to parse the whole file
-           name='impossible')
-    ])
+def main_file_description():
+    return SM(
+        name='root',
+        weak=True,
+        startReStr='',
+        fixedStartValues={'program_name': 'Molcas',
+                        'program_basis_set_type': 'gaussians'},
+        sections=['section_run'],
+        subMatchers=[
+            get_header_sm(),
+            #get_inputfile_echo_sm(),
+            molcas_main_loop_sm(),
+            SM(r'x^',  # force parser to parse the whole file
+            name='impossible')
+        ])
 
 
-def main(**kwargs):
-    mainFunction(mainFileDescription=mainFileDescription,
-                 metaInfoEnv=metaInfoEnv,
-                 parserInfo=parser_info,
-                 cachingLevelForMetaName={},
-                 superContext=context,
-                 **kwargs)
+class MolcasParser():
+    """ A proper class envolop for running this parser from within python. """
+    def __init__(self, backend, **kwargs):
+        self.backend_factory = backend
+
+    def parse(self, mainfile):
+        global context
+        context = MolcasContext()
+
+        from unittest.mock import patch
+        logging.debug('molcas parser started')
+        logging.getLogger('nomadcore').setLevel(logging.WARNING)
+        backend = self.backend_factory(metaInfoEnv)
+        with patch.object(sys, 'argv', ['<exe>', '--uri', 'nmd://uri', mainfile]):
+            mainFunction(
+                mainFileDescription=main_file_description(),
+                metaInfoEnv=metaInfoEnv,
+                parserInfo=parser_info,
+                cachingLevelForMetaName={},
+                superContext=context,
+                superBackend=backend)
+
+        return backend
+
 
 if __name__ == '__main__':
-    main()
+    mainFunction(
+        mainFileDescription=main_file_description(),
+        metaInfoEnv=metaInfoEnv,
+        parserInfo=parser_info,
+        cachingLevelForMetaName={},
+        superContext=context,
+        **kwargs)
