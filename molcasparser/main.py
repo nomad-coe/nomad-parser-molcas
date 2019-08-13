@@ -646,7 +646,7 @@ def main_file_description():
         name='root',
         weak=True,
         startReStr='',
-        fixedStartValues={'program_name': 'Molcas',
+        fixedStartValues={'program_name': 'MOLCAS',
                         'program_basis_set_type': 'gaussians'},
         sections=['section_run'],
         subMatchers=[
