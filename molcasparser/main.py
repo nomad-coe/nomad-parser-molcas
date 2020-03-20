@@ -29,15 +29,9 @@ from nomadcore.simple_parser import mainFunction, SimpleMatcher as SM
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 from nomadcore.unit_conversion.unit_conversion \
     import register_userdefined_quantity, convert_unit
-import nomad_meta_info
 
 from .functionals import functionals
 
-metaInfoPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(nomad_meta_info.__file__)), "molcas.nomadmetainfo.json"))
-metaInfoEnv, warnings = loadJsonFile(filePath=metaInfoPath,
-                                     dependencyLoader=None,
-                                     extraArgsHandling=InfoKindEl.ADD_EXTRA_ARGS,
-                                     uri=None)
 
 parser_info = {'name': 'molcas-parser', 'version': '1.0'}
 
@@ -670,24 +664,14 @@ class MolcasParser():
         from unittest.mock import patch
         logging.debug('molcas parser started')
         logging.getLogger('nomadcore').setLevel(logging.WARNING)
-        backend = self.backend_factory(metaInfoEnv)
+        backend = self.backend_factory("molcas.nomadmetainfo.json")
         with patch.object(sys, 'argv', ['<exe>', '--uri', 'nmd://uri', mainfile]):
             mainFunction(
                 mainFileDescription=main_file_description(),
-                metaInfoEnv=metaInfoEnv,
+                metaInfoEnv=None,
                 parserInfo=parser_info,
                 cachingLevelForMetaName={},
                 superContext=context,
                 superBackend=backend)
 
         return backend
-
-
-if __name__ == '__main__':
-    mainFunction(
-        mainFileDescription=main_file_description(),
-        metaInfoEnv=metaInfoEnv,
-        parserInfo=parser_info,
-        cachingLevelForMetaName={},
-        superContext=context,
-        **kwargs)
