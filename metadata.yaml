@@ -1,0 +1,7 @@
+codeLabel: Molcas
+codeLabelStyle: 'Capitals: M; also seen all in capitals'
+codeUrl: http://molcas.org/
+parserDirName: dependencies/parsers/molcas/
+parserGitUrl: https://gitlab.mpcdf.mpg.de/nomad-lab/parser-molcas
+parserSpecific: ''
+tableOfFiles: ''
