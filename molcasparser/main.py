@@ -1,4 +1,8 @@
-# Copyright 2016-2018 Ask Hjorth Larsen, Fawzi Mohamed
+#
+# Copyright The NOMAD Authors.
+#
+# This file is part of NOMAD.
+# See https://nomad-lab.eu for further info.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Main author and maintainer: Ask Hjorth Larsen <asklarsen@gmail.com>
 
 from __future__ import print_function
 import os
