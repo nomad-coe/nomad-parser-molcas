@@ -25,6 +25,9 @@ from nomad.metainfo import (  # pylint: disable=unused-import
 from nomad.datamodel.metainfo import run
 
 
+m_package = Package()
+
+
 class x_molcas_section_frequency(MSection):
     '''
     Section for Molcas frequency (symmetry, frequency, intensity)
